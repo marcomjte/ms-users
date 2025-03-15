@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "dotenv": "^16.4.7",
+    "express-async-handler": "^1.2.0",
+    "luxon": "^3.5.0",
     "mysql": "^2.18.1",
     "nodemon": "^3.1.9",
     "swagger-jsdoc": "^6.2.8",
@@ -19,7 +21,7 @@
     "zod": "^3.24.2"
   },
   "author": "Marco Antonio Jiménez Sánchez",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/express": "^5.0.0",
     "express": "^4.21.2"
