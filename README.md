@@ -16,8 +16,8 @@ Sistema para la gestión de empleados
 1. Crear y configurar variables de entorno en el archivo `.env` con las variables en el archivo `.env.template`
 2. Ejecutar `npm install`
 3. Ejecutar `npm run dev`
-4. Abrir [Servidor API](http://localhost:3000/)
-5. Abrir [Servidor API Doc](http://localhost:3000/api-docs/)
+4. Abrir [Servidor API](http://localhost:3000/v1)
+5. Abrir [Servidor API Doc](http://localhost:3000/v1/api-docs/)
 
 ## Docker
 > [!CAUTION]
