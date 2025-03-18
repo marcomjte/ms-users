@@ -1,23 +1,12 @@
-FROM node as build
+# Versión de nodejs
+FROM node:23.7
 
-RUN npm i -g npm
+WORKDIR /usr/src/app
 
-RUN mkdir -p /run/secrets
-RUN touch /run/secrets/secret
+COPY package*.json ./
 
-WORKDIR /opt/app
-
-# Copiamos archivos especificos
-COPY entrypoint.sh package.json
-
-# Instalamos lo necesario
+# Instalar dependencias
 RUN npm install
-
-# Copiamos las carpetas completas
-COPY . .
-
-# Agregar permiso de ejecución
-RUN chmod +x entrypoint.sh
 
 # Generamos los archivos .js de todo el proyecto
 RUN npm build
@@ -25,6 +14,11 @@ RUN npm build
 #Sobreescribimos sobre un archivo temporal que sustituye al archivo original, .ts por .js al archivo final
 RUN sed -i 's/*.ts/*.js/g' src/app/data-source.js
 
-# Ejecutamos entrypoint
-CMD "./entrypoint.sh"
-# CMD ["/bin/sh", "-c", "chmod +x /opt/app/entrypoint.sh && /opt/app/entrypoint.sh"]
+# Copiar el resto del código
+COPY . .
+
+# Puerto de la api
+EXPOSE 3000
+
+# Comando para correr la app
+CMD ["node", "src/index.js"]
