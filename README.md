@@ -1,24 +1,109 @@
-# Sistema de Gestión de Empleados
-Sistema para la gestión de empleados
-- Permite gestionar empleados
-- Registro de horas de trabajo
-- Calcula la nómina basada en los registros.
+# majs-lambda-serverless
 
-## Requerimientos
-- Mysql 8
-- Nodejs 23.7
+Aplicación serverless de procesamiento de pedidos desplegada en **AWS**, construida con [Serverless Framework](https://www.serverless.com/). Implementa una arquitectura event-driven con AWS Lambda, SQS y DynamoDB para gestionar el flujo completo de una orden: creación, preparación y envío.
 
-## Instalación
-- Ejecutar script de base de datos en la carpeta `doc/db_segula_v1.sql`
+## Arquitectura
 
-## Ejecución
+```
+POST /order
+    └─► Lambda: newOrder ──► SQS: pendingOrderQueue ──► Lambda: prepOrder
+                         └─► DynamoDB: Orders
+                                    └─► DynamoDB Stream ──► Lambda: sendOrder ──► SQS: ordersToSendQueue
 
-1. Crear y configurar variables de entorno en el archivo `.env` con las variables en el archivo `.env.template`
-2. Ejecutar `npm install`
-3. Ejecutar `npm run dev`
-4. Abrir [Servidor API](http://localhost:3000/v1)
-5. Abrir [Servidor API Doc](http://localhost:3000/v1/api-docs/)
+GET /order/{orderId}
+    └─► Lambda: getOrder ──► DynamoDB: Orders
+```
 
-## Docker
-> [!CAUTION]
-> Los archivos de docker pueden no ser funcionales
+## Servicios AWS utilizados
+
+| Servicio | Recurso | Descripción |
+|---|---|---|
+| **Lambda** | `newOrder` | Recibe un pedido vía HTTP POST y lo encola |
+| **Lambda** | `getOrder` | Consulta el estado de un pedido por ID |
+| **Lambda** | `prepOrder` | Consume la cola y prepara el pedido en DynamoDB |
+| **Lambda** | `sendOrder` | Se activa por DynamoDB Stream al modificar un pedido |
+| **SQS** | `pendingOrderQueue` | Cola de pedidos pendientes de preparar |
+| **SQS** | `ordersToSendQueue` | Cola de pedidos listos para envío |
+| **DynamoDB** | `Orders` | Tabla principal con Streams habilitados |
+
+## Endpoints
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `POST` | `/order` | Crear un nuevo pedido |
+| `GET` | `/order/{orderId}` | Consultar un pedido por ID |
+
+### Ejemplo de payload
+
+```json
+{
+  "orderId": "1",
+  "pizza": "margarita",
+  "customerId": "abc"
+}
+```
+
+## Requisitos previos
+
+- Node.js 20+
+- [Serverless Framework](https://www.serverless.com/) instalado globalmente
+- AWS CLI configurado con credenciales válidas
+- Cuenta de AWS con permisos sobre Lambda, SQS, DynamoDB e IAM
+
+```bash
+npm install -g serverless
+```
+
+## Instalación y despliegue
+
+1. Clonar el repositorio:
+
+```bash
+git clone https://github.com/marcomjte/majs-lambda-serverless.git
+cd majs-lambda-serverless
+```
+
+2. Instalar dependencias:
+
+```bash
+npm install
+```
+
+3. Desplegar en AWS (región `us-east-1`):
+
+```bash
+serverless deploy
+```
+
+## Comandos útiles
+
+### Invocar una Lambda manualmente
+
+```bash
+aws lambda invoke \
+  --function-name pizzaApp-dev-sendOrder \
+  --region us-east-1 \
+  --cli-binary-format raw-in-base64-out \
+  --invocation-type Event \
+  --payload '{"orderId": "1","pizza": "margarita","customerId": "abc"}' \
+  response.json
+```
+
+### Enviar un mensaje directo a SQS
+
+```bash
+aws sqs send-message \
+  --queue-url https://sqs.us-east-1.amazonaws.com/<account-id>/pendingOrderQueue \
+  --message-body "Esto es un mensaje" \
+  --region us-east-1
+```
+
+### Eliminar el stack de AWS
+
+```bash
+serverless remove
+```
+
+## Licencia
+
+MIT
